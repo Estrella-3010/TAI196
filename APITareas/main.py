@@ -58,5 +58,12 @@ def ActualizarTarea(id:int, tarea:dict):
             return {"Tarea Actualizada":tar}
     raise HTTPException(status_code=400, detail='Tarea no encontrada')
 
-
+#endpoint para eliminar tareas
+@app.delete('/tareas/{id}', tags=['Operaciones CRUD'])
+def EliminarTarea(id:int):
+    for tar in tareas:
+        if tar["id"] == id:
+            tareas.remove(tar)
+            return {'message':'Tarea eliminada'}
+    raise HTTPException(status_code=400, detail='Tarea no registrada')
 
