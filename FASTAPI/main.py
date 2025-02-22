@@ -1,7 +1,10 @@
 #importamos httpexception para manejar errores
 from fastapi import FastAPI, HTTPException
 # importamos la libreria para permitir datos opcionales
-from typing import Optional
+from typing import Optional, List
+
+from pydantic import BaseModel
+
 
 # declaracion del objeto y la instaciamos de la clase FastAPI
 app = FastAPI(
@@ -10,12 +13,20 @@ app = FastAPI(
     version='1.0.1'
 )
 
+#Modelo para validacion de datos 
+class modelUsuario(BaseModel):
+    id:int
+    nombre:str
+    edad:int
+    correo: str
+
+
 #Creamos una lista para la base de datos 
 usuarios=[
-    {"id":1, "nombre":"Estrella", "edad":20},
-    {"id":2, "nombre":"Lu", "edad":20},
-    {"id":3, "nombre":"Lalo", "edad":21},
-    {"id":4, "nombre":"Domi", "edad":20},
+    {"id":1, "nombre":"Estrella", "edad":20, "correo":"estrella@ejemplo.com"},
+    {"id":2, "nombre":"Lu", "edad":20, "correo":"lu@ejemplo.com"},
+    {"id":3, "nombre":"Lalo", "edad":21, "correo":"lalo@ejemplo.com"},
+    {"id":4, "nombre":"Domi", "edad":20, "correo":"domi@ejemplo.com"},
 ]
 
 
@@ -27,16 +38,16 @@ def main():
     return {'Hola FASTAPI':'EstrellaCuellar'}
 
 #endpoint para consultar todos los usuarios
-@app.get('/usuarios', tags=['Operaciones CRUD'])
+@app.get('/usuarios', response_model=List[modelUsuario], tags=['Operaciones CRUD'])
 def ConsultarTodos():
-    return {'Usuarios Registrados': usuarios}
+    return usuarios
 
 #endpont para agregar usuarios, la diagonal indica que es un parametro  
-@app.post('/usuarios/', tags=['Operaciones CRUD'])
+@app.post('/usuarios/',response_model=modelUsuario, tags=['Operaciones CRUD'])
 #definimos los parametros que recibira el metodo en este caso sera una lista de diccionarios
-def AgregarUsuario(usuario:dict):
+def AgregarUsuario(usuario:modelUsuario):
     for usr in usuarios:
-        if usr["id"] == usuario.get("id"):
+        if usr["id"] == usuario.id:
             # el raise nos permite lanzar una excepcion
             raise HTTPException(status_code=400, detail='El id ya esta registrado')
     
@@ -44,12 +55,12 @@ def AgregarUsuario(usuario:dict):
     return usuario
 
 #endpoint para actualizar usuarios
-@app.put('/usuarios/{id}', tags=['Operaciones CRUD'])
-def ActualizarUsuaario(id:int, usuario:dict):
-    for usr in usuarios:
+@app.put('/usuarios/{id}', response_model=modelUsuario,tags=['Operaciones CRUD'])
+def ActualizarUsuaario(id:int, usuario_actualizado:modelUsuario):
+    for index,usr in enumerate(usuarios):
         if usr["id"] == id:
-            usr.update(usuario)
-            return {"Usuario Actualizado":usr}
+            usuarios[index] = usuario_actualizado.model_dump()
+            return usuarios[index]
     raise HTTPException(status_code=400, detail='Usuario no encontrado')
 
 #endpoint para eliminar usuarios
