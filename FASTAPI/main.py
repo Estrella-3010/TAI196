@@ -2,8 +2,8 @@
 from fastapi import FastAPI, HTTPException
 # importamos la libreria para permitir datos opcionales
 from typing import Optional, List
+from modelsPydantic import modelUsuario
 
-from pydantic import BaseModel
 
 
 # declaracion del objeto y la instaciamos de la clase FastAPI
@@ -13,12 +13,6 @@ app = FastAPI(
     version='1.0.1'
 )
 
-#Modelo para validacion de datos 
-class modelUsuario(BaseModel):
-    id:int
-    nombre:str
-    edad:int
-    correo: str
 
 
 #Creamos una lista para la base de datos 
