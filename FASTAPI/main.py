@@ -1,8 +1,10 @@
 #importamos httpexception para manejar errores
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 # importamos la libreria para permitir datos opcionales
 from typing import Optional, List
-from modelsPydantic import modelUsuario
+from modelsPydantic import modelUsuario, modelAuth
+from tokenGen import createToken
 
 
 
@@ -30,6 +32,19 @@ usuarios=[
 def main():
     # retornamos en formato JSON un mensaje 
     return {'Hola FASTAPI':'EstrellaCuellar'}
+
+#endpoint para token
+@app.post('/auth', tags=['Autenticación'])
+def login(autorizado:modelAuth):
+    if autorizado.correo == "estrella@example.com" and autorizado.passw == "12345678":
+        token:str = createToken(autorizado.model_dump())
+        print(token)
+        return {"Aviso":"Token generado"}
+    else:
+        return {"Aviso":"Usuario no autorizado"}
+
+
+
 
 #endpoint para consultar todos los usuarios
 @app.get('/usuarios', response_model=List[modelUsuario], tags=['Operaciones CRUD'])
@@ -65,6 +80,8 @@ def EliminarUsuario(id:int):
             usuarios.remove(usr)
             return {'message':'Usuario eliminado'}
     raise HTTPException(status_code=400, detail='Usuario no registrado')
+
+
 
 
 
