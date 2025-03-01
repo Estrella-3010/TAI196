@@ -1,10 +1,11 @@
 #importamos httpexception para manejar errores
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Depends
 from fastapi.responses import JSONResponse
 # importamos la libreria para permitir datos opcionales
 from typing import Optional, List
 from modelsPydantic import modelUsuario, modelAuth
 from tokenGen import createToken
+from middelwares import BearerJWT
 
 
 
@@ -20,7 +21,7 @@ app = FastAPI(
 #Creamos una lista para la base de datos 
 usuarios=[
     {"id":1, "nombre":"Estrella", "edad":20, "correo":"estrella@ejemplo.com"},
-    {"id":2, "nombre":"Lu", "edad":20, "correo":"lu@ejemplo.com"},
+    {"id":2, "nombre":"Lucero", "edad":20, "correo":"lu@ejemplo.com"},
     {"id":3, "nombre":"Lalo", "edad":21, "correo":"lalo@ejemplo.com"},
     {"id":4, "nombre":"Domi", "edad":20, "correo":"domi@ejemplo.com"},
 ]
@@ -39,7 +40,7 @@ def login(autorizado:modelAuth):
     if autorizado.correo == "estrella@example.com" and autorizado.passw == "12345678":
         token:str = createToken(autorizado.model_dump())
         print(token)
-        return {"Aviso":"Token generado"}
+        return JSONResponse(content={"token": token})
     else:
         return {"Aviso":"Usuario no autorizado"}
 
@@ -47,7 +48,7 @@ def login(autorizado:modelAuth):
 
 
 #endpoint para consultar todos los usuarios
-@app.get('/usuarios', response_model=List[modelUsuario], tags=['Operaciones CRUD'])
+@app.get('/usuarios',dependencies=[Depends(BearerJWT())], response_model=List[modelUsuario], tags=['Operaciones CRUD'])
 def ConsultarTodos():
     return usuarios
 
