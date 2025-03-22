@@ -6,8 +6,8 @@ from typing import Optional, List
 from modelsPydantic import modelUsuario, modelAuth
 from tokenGen import createToken
 from middelwares import BearerJWT
-
-
+from DB.conexion import Session,engine, Base
+from models.modelsDB import User
 
 # declaracion del objeto y la instaciamos de la clase FastAPI
 app = FastAPI(
@@ -15,6 +15,8 @@ app = FastAPI(
     description='Estrella Cuellar',
     version='1.0.1'
 )
+# se va a encargar de levantar las tablas en la base de datos
+Base.metadata.create_all(bind=engine)
 
 
 
@@ -56,13 +58,23 @@ def ConsultarTodos():
 @app.post('/usuarios/',response_model=modelUsuario, tags=['Operaciones CRUD'])
 #definimos los parametros que recibira el metodo en este caso sera una lista de diccionarios
 def AgregarUsuario(usuario:modelUsuario):
-    for usr in usuarios:
-        if usr["id"] == usuario.id:
-            # el raise nos permite lanzar una excepcion
-            raise HTTPException(status_code=400, detail='El id ya esta registrado')
+    db=Session()
+    try:
+        db.add(User(**usuario.model_dump()))
+        db.commit()
+        return JSONResponse(status_code=201,
+                            content={"mensaje":"Usuario creado",
+                                     "usuario":usuario.model_dump()})
     
-    usuarios.append(usuario)
-    return usuario
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500,
+                            content={"mensaje":"Error al crear el usuario",
+                                     "error":str(e)})
+
+    finally: 
+        db.close()
+
 
 #endpoint para actualizar usuarios
 @app.put('/usuarios/{id}', response_model=modelUsuario,tags=['Operaciones CRUD'])
